@@ -92,7 +92,7 @@ st.markdown("""
 # Sidebar for Key
 with st.sidebar:
     st.markdown("### 🔐 ACCESS MEDHA")
-    api_key = st.text_input("Groq API Key", type="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")
+    api_key = st.text_input("Groq API Key", type="password")
     st.markdown("[Get Key Here](https://console.groq.com/keys)")
     st.markdown("---")
     st.markdown("Running on **LPU Speed Engine**")
