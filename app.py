@@ -12,7 +12,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# Load Key securely from secrets.toml (or Cloud Secrets)
+# Load Key securely
 try:
     api_key = st.secrets["GROQ_API_KEY"]
 except FileNotFoundError:
@@ -23,59 +23,63 @@ except KeyError:
     st.stop()
 
 # ==========================================
-# 2. THE "LIQUID GLASS" THEME (Apple Style)
+# 2. THE "ROYAL BLUE" LEGENDARY THEME
 # ==========================================
 st.markdown("""
 <style>
-    /* 1. GLOBAL TEXT FIX */
-    .stApp, p, h1, h2, h3, label, .stMarkdown {
-        color: #ffffff !important; /* Force white text everywhere */
+    /* 1. FORCE WHITE TEXT */
+    .stApp, p, h1, h2, h3, label, .stMarkdown, .stWrite {
+        color: #ffffff !important;
     }
 
-    /* 2. BACKGROUND: Deep Space Gradient */
+    /* 2. BACKGROUND: ROYAL IMPERIAL BLUE GRADIENT */
     .stApp {
-        background: radial-gradient(circle at center, #1e1e2f 0%, #000000 100%);
+        background: linear-gradient(135deg, #001f3f 0%, #003366 50%, #00509e 100%);
+        background-attachment: fixed;
     }
 
-    /* 3. LIQUID GLASS INPUT BOX */
+    /* 3. LIQUID GLASS INPUT (Blue Tint) */
     .stTextInput > div > div > input {
-        background: rgba(255, 255, 255, 0.05) !important; /* Mostly transparent */
-        backdrop-filter: blur(10px); /* The Frost Effect */
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        color: #00e5ff !important;
+        background: rgba(0, 80, 158, 0.2) !important;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: #ffffff !important;
         border-radius: 12px;
-        padding: 10px;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
+        padding: 12px;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
     }
     
     .stTextInput > div > div > input:focus {
-        border: 1px solid #00e5ff !important;
-        box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
-        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid #4da6ff !important;
+        box-shadow: 0 0 20px rgba(77, 166, 255, 0.4);
+        background: rgba(0, 80, 158, 0.4) !important;
     }
 
-    /* 4. LIQUID GLASS BUTTONS (The Apple Look) */
+    /* 4. LIQUID GLASS BUTTONS */
     div.stButton > button {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
         color: #ffffff;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 0.5rem 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        font-weight: bold;
         transition: all 0.3s ease;
     }
 
     div.stButton > button:hover {
-        background: rgba(0, 229, 255, 0.2); /* Neon cyan tint on hover */
-        border: 1px solid rgba(0, 229, 255, 0.5);
+        background: rgba(77, 166, 255, 0.3); /* Royal Blue Glow */
         transform: scale(1.02);
-        box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+        box-shadow: 0 0 15px rgba(77, 166, 255, 0.5);
+        border-color: #4da6ff;
+    }
+    
+    /* 5. HEADER GLOW */
+    h1 {
+        text-shadow: 0 0 10px #4da6ff, 0 0 20px #003366;
     }
 
-    /* 5. REMOVE DEFAULT JUNK */
+    /* REMOVE JUNK */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -88,10 +92,10 @@ st.markdown("""
 # ==========================================
 
 st.title("MEDHA AI")
-st.markdown("<div style='text-align: center; color: #888; margin-bottom: 20px;'>THE GLASS INTERFACE</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #aaccff; margin-bottom: 20px; font-weight: 300;'>THE ROYAL INTERFACE</div>", unsafe_allow_html=True)
 
 # The Search Box
-query = st.text_input("", placeholder="Ask the Hive Mind... (e.g. Black Holes)")
+query = st.text_input("", placeholder="Ask Medha... (e.g. History of India)")
 
 # Execution Logic
 if query:
@@ -101,11 +105,11 @@ if query:
             # 1. Retrieve Data
             st.write("📡 Scanning Global Knowledge Base...")
             wiki_page = wikipedia.page(query, auto_suggest=True)
-            raw_text = wiki_page.content[:5000]
+            raw_text = wiki_page.content[:6000] # Increased context
             st.write(f"✅ Target Locked: {wiki_page.title}")
             
             # 2. Activate Groq
-            st.write("⚡ Engaging LPU Inference Engine...")
+            st.write("⚡ Engaging LPU Engine (Llama 3.1)...")
             client = Groq(api_key=api_key)
             
             status.update(label="INTELLIGENCE ACQUIRED", state="complete", expanded=False)
@@ -117,11 +121,11 @@ if query:
             response_container = st.empty()
             full_response = ""
             
-            # C. The Stream
+            # C. The Stream (UPDATED MODEL ID HERE)
             stream = client.chat.completions.create(
-                model="llama3-8b-8192",
+                model="llama-3.1-8b-instant",  # <--- FIXED MODEL ID
                 messages=[
-                    {"role": "system", "content": "You are MEDHA, a futuristic AI. Summarize the text in deep detail but using bullet points. Use a professional, scientific tone."},
+                    {"role": "system", "content": "You are MEDHA, a sophisticated AI. Summarize the provided text in 5-7 clear, professional bullet points. Be concise but deep. Do not use conversational filler."},
                     {"role": "user", "content": raw_text}
                 ],
                 temperature=0.5,
