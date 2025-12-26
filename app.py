@@ -93,7 +93,7 @@ st.markdown("""
 # ==========================================
 
 st.title("MEDHA AI")
-st.markdown("<div style='text-align: center; color: #aaccff; margin-bottom: 20px; font-weight: 300;'>THE ROYAL INTERFACE</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #aaccff; margin-bottom: 20px; font-weight: 300;'>A PRODUCT OF SAMRION Ltd.</div>", unsafe_allow_html=True)
 
 # The Search Box
 query = st.text_input("", placeholder="Ask Medha... (e.g. History of India)")
