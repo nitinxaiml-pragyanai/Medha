@@ -16,73 +16,74 @@ st.set_page_config(
 try:
     api_key = st.secrets["GROQ_API_KEY"]
 except FileNotFoundError:
-    st.error("❌ CRITICAL ERROR: Secrets file not found. Please set up .streamlit/secrets.toml")
+    st.error("❌ CRITICAL ERROR: Secrets file not found.")
     st.stop()
 except KeyError:
     st.error("❌ CRITICAL ERROR: 'GROQ_API_KEY' not found in secrets.")
     st.stop()
 
 # ==========================================
-# 2. THE "ROYAL BLUE" LEGENDARY THEME
+# 2. THE ROYAL BLUE THEME (CSS)
 # ==========================================
 st.markdown("""
 <style>
-    /* 1. FORCE WHITE TEXT */
-    .stApp, p, h1, h2, h3, label, .stMarkdown, .stWrite {
+    /* FORCE WHITE TEXT */
+    .stApp, p, h1, h2, h3, label, .stMarkdown, .stWrite, .stRadio {
         color: #ffffff !important;
     }
 
-    /* 2. BACKGROUND: ROYAL IMPERIAL BLUE GRADIENT */
+    /* ROYAL BLUE GRADIENT BACKGROUND */
     .stApp {
         background: linear-gradient(135deg, #001f3f 0%, #003366 50%, #00509e 100%);
         background-attachment: fixed;
     }
 
-    /* 3. LIQUID GLASS INPUT (Blue Tint) */
+    /* GLASS INPUT BOX */
     .stTextInput > div > div > input {
         background: rgba(0, 80, 158, 0.2) !important;
         backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         color: #ffffff !important;
         border-radius: 12px;
         padding: 12px;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
     }
     
     .stTextInput > div > div > input:focus {
-        border: 1px solid #4da6ff !important;
-        box-shadow: 0 0 20px rgba(77, 166, 255, 0.4);
-        background: rgba(0, 80, 158, 0.4) !important;
-    }
-
-    /* 4. LIQUID GLASS BUTTONS */
-    div.stButton > button {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        color: #ffffff;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 10px;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-
-    div.stButton > button:hover {
-        background: rgba(77, 166, 255, 0.3); /* Royal Blue Glow */
-        transform: scale(1.02);
+        border-color: #4da6ff !important;
         box-shadow: 0 0 15px rgba(77, 166, 255, 0.5);
-        border-color: #4da6ff;
-    }
-    
-    /* 5. HEADER GLOW */
-    h1 {
-        text-shadow: 0 0 10px #4da6ff, 0 0 20px #003366;
     }
 
-    /* REMOVE JUNK */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    /* TABS STYLE */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 20px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background-color: rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 10px 20px;
+        color: white;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #4da6ff !important;
+        color: white !important;
+    }
+
+    /* DOWNLOAD BUTTON STYLE */
+    div.stDownloadButton > button {
+        background: linear-gradient(45deg, #ff007f, #ff4081);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        transition: transform 0.2s;
+    }
+    div.stDownloadButton > button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 10px #ff007f;
+    }
+
+    /* HIDE JUNK */
+    #MainMenu, footer, header {visibility: hidden;}
     
 </style>
 """, unsafe_allow_html=True)
@@ -99,52 +100,88 @@ query = st.text_input("", placeholder="Ask Medha... (e.g. History of India)")
 
 # Execution Logic
 if query:
-    # A. Visual Feedback
-    with st.status("🚀 INITIATING NEURAL LINK...", expanded=True) as status:
-        try:
-            # 1. Retrieve Data
-            st.write("📡 Scanning Global Knowledge Base...")
+    # 1. DATA FETCHING (Outside the tabs to save state)
+    try:
+        # Use a spinner instead of a collapsible status box
+        with st.spinner("📡 Scanning Global Knowledge Base..."):
             wiki_page = wikipedia.page(query, auto_suggest=True)
-            raw_text = wiki_page.content[:6000] # Increased context
-            st.write(f"✅ Target Locked: {wiki_page.title}")
+            raw_text = wiki_page.content
+            title = wiki_page.title
             
-            # 2. Activate Groq
-            st.write("⚡ Engaging LPU Engine (Llama 3.1)...")
-            client = Groq(api_key=api_key)
-            
-            status.update(label="INTELLIGENCE ACQUIRED", state="complete", expanded=False)
+            # Smart truncation for AI (first 6000 chars)
+            ai_input_text = raw_text[:6000]
 
-            # B. The Display
-            st.markdown(f"### ⚡ ANALYSIS: {wiki_page.title.upper()}")
+        # 2. SUCCESS HEADER
+        st.success(f"✅ TARGET LOCKED: {title.upper()}")
+
+        # 3. TABS for View Options
+        tab_summary, tab_raw = st.tabs(["⚡ AI ANALYSIS", "📜 SOURCE DATA"])
+
+        # === TAB 1: AI SUMMARY ===
+        with tab_summary:
+            st.markdown(f"### 🧠 INTELLIGENCE REPORT")
             
-            # Streaming Container
-            response_container = st.empty()
-            full_response = ""
+            # Container for streaming text
+            report_box = st.empty()
+            full_summary = ""
+
+            # Check if we already have the summary in session state to avoid re-generating on tab switch
+            # (Simple version: We stream it fresh for effect)
             
-            # C. The Stream (UPDATED MODEL ID HERE)
-            stream = client.chat.completions.create(
-                model="llama-3.1-8b-instant",  # <--- FIXED MODEL ID
-                messages=[
-                    {"role": "system", "content": "You are MEDHA, a sophisticated AI. Summarize the provided text in 5-7 clear, professional bullet points. Be concise but deep. Do not use conversational filler."},
-                    {"role": "user", "content": raw_text}
-                ],
-                temperature=0.5,
-                max_tokens=600,
-                stream=True
+            try:
+                client = Groq(api_key=api_key)
+                stream = client.chat.completions.create(
+                    model="llama-3.1-8b-instant",
+                    messages=[
+                        {"role": "system", "content": "You are MEDHA. Summarize the text in 5-7 distinct, professional bullet points. Be concise. Do not use intro phrases like 'Here is the summary'."},
+                        {"role": "user", "content": ai_input_text}
+                    ],
+                    temperature=0.5,
+                    max_tokens=600,
+                    stream=True
+                )
+
+                # Stream the output
+                for chunk in stream:
+                    if chunk.choices[0].delta.content:
+                        content = chunk.choices[0].delta.content
+                        full_summary += content
+                        report_box.markdown(full_summary + " █")
+                
+                # Final render without cursor
+                report_box.markdown(full_summary)
+
+                st.markdown("---")
+                # DOWNLOAD BUTTON (SUMMARY)
+                st.download_button(
+                    label="💾 Download Summary (.txt)",
+                    data=f"MEDHA AI REPORT: {title}\n\n{full_summary}",
+                    file_name=f"{title}_Summary.txt",
+                    mime="text/plain"
+                )
+
+            except Exception as e:
+                st.error(f"AI ERROR: {str(e)}")
+
+        # === TAB 2: RAW DATA ===
+        with tab_raw:
+            st.markdown(f"### 📂 FULL DOSSIER: {title}")
+            
+            # DOWNLOAD BUTTON (RAW)
+            st.download_button(
+                label="💾 Download Raw Data (.txt)",
+                data=raw_text,
+                file_name=f"{title}_Raw.txt",
+                mime="text/plain"
             )
-
-            # D. Render
-            for chunk in stream:
-                if chunk.choices[0].delta.content:
-                    content = chunk.choices[0].delta.content
-                    full_response += content
-                    response_container.markdown(full_response + " █")
             
-            response_container.markdown(full_response)
+            # Show Raw Text (Scrollable area)
+            st.text_area("Raw Text Content", raw_text, height=400)
 
-        except wikipedia.exceptions.DisambiguationError as e:
-            st.error(f"⚠️ AMBIGUOUS SIGNAL. DID YOU MEAN: {', '.join(e.options[:3])}")
-        except wikipedia.exceptions.PageError:
-            st.error("❌ SIGNAL LOST. TOPIC NOT FOUND.")
-        except Exception as e:
-            st.error(f"❌ SYSTEM FAILURE: {str(e)}")
+    # ERROR HANDLING
+    except wikipedia.exceptions.DisambiguationError as e:
+        st.error(f"⚠️ AMBIGUOUS TOPIC. DID YOU MEAN: {', '.join(e.options[:3])}")
+    except wikipedia.exceptions.PageError:
+        st.error("❌ TOPIC NOT FOUND IN DATABASE.")
+    except Exception as e:
+        st.error(f"❌ SYSTEM FAILURE: {str(e)}")
